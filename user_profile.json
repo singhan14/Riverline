@@ -1,0 +1,38 @@
+{
+    "user_123": {
+        "name": "John Doe",
+        "outstanding_debt": 5000,
+        "currency": "INR",
+        "risk_score": "High",
+        "payment_history": [
+            "Missed",
+            "Missed",
+            "Paid Partial"
+        ],
+        "preferred_communication": "WhatsApp"
+    },
+    "user_456": {
+        "name": "Jane Smith",
+        "outstanding_debt": 25000,
+        "currency": "INR",
+        "risk_score": "Medium",
+        "payment_history": [
+            "Paid",
+            "Paid",
+            "Missed"
+        ],
+        "preferred_communication": "Email"
+    },
+    "user_789": {
+        "name": "Bob Builder",
+        "outstanding_debt": 2000,
+        "currency": "INR",
+        "risk_score": "Low",
+        "payment_history": [
+            "Paid",
+            "Paid",
+            "Paid"
+        ],
+        "preferred_communication": "Phone"
+    }
+}

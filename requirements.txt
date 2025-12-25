@@ -1,0 +1,16 @@
+streamlit
+python-dotenv
+langchain
+langchain-community
+langchain-groq
+langsmith
+langgraph
+wikipedia
+# Persistence
+aiosqlite
+langgraph-checkpoint-sqlite
+langgraph-checkpoint-postgres
+psycopg-binary
+psycopg_pool
+# MCP
+mcp
