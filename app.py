@@ -64,12 +64,13 @@ if "current_uid" not in st.session_state:
 # If user changed, clear chat history from UI (Agent memory persists in SQLite though!)
 if st.session_state.current_uid != selected_uid:
     st.session_state.messages = []
+    # Use 'v2' to bypass old checkpoints that cause KeyError: 'pending_sends' after upgrade
     st.session_state.current_uid = selected_uid
     st.rerun()
 
 # Thread ID based on User ID -> "riverline_user_123"
 # This ensures that when you switch back to John Doe, his chat history remains!
-thread_id = f"riverline_{selected_uid}"
+thread_id = f"riverline_v2_user_{selected_uid}"
 
 # SYSTEM PROMPT (Dynamic based on selected User)
 # Define this globally so it's available for the chat input handler
