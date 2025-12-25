@@ -25,9 +25,12 @@ def run_async(coro):
 
 class RiverlineMCPClient:
     def __init__(self):
+        # Resolve absolute path to server script
+        server_script = os.path.join(os.path.dirname(__file__), "mcp_server.py")
+        
         self.server_params = StdioServerParameters(
-            command="python", # Use the same python env
-            args=["mcp_server.py"],
+            command=sys.executable, # Use the current python interpreter
+            args=[server_script],
             env=os.environ.copy()
         )
     
