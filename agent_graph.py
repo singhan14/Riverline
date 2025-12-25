@@ -128,8 +128,16 @@ def build_graph():
     
     if db_url and "postgres" in db_url:
         print("🌍 Using Cloud Database (PostgreSQL)...")
-        # Initialize connection pool
-        pool = ConnectionPool(conninfo=db_url, max_size=20, kwargs={"autocommit": True})
+        # Initialize connection pool with Serverless-friendly settings
+        # min_size=0: Don't hold connections (Neon scales to 0)
+        # max_lifetime=120: Recycle connections frequently to avoid SSL timeouts
+        pool = ConnectionPool(
+            conninfo=db_url,
+            min_size=0,
+            max_size=20,
+            max_lifetime=120,
+            kwargs={"autocommit": True}
+        )
         memory = PostgresSaver(pool)
         memory.setup()
     else:
