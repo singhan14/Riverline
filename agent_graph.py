@@ -112,19 +112,34 @@ def get_tools():
 
 def context_trimmer(state):
     """
-    Trims the chat history to the last 8 messages to prevent 
-    exceeding the 6000 TPM (Tokens Per Minute) limit of Llama 3 8B.
+    Trims chat history to prevent 413 Errors.
+    Robustly handles both List and Dict input types.
     """
-    # LangGraph can pass state as a dict OR a list depending on context
-    if isinstance(state, list):
-        messages = state
-    else:
-        messages = state.get("messages", [])
+    try:
+        # Case 1: State is a Dict (standard LangGraph state)
+        if isinstance(state, dict):
+            messages = state.get("messages", [])
+        # Case 2: State is a simple List of messages
+        elif isinstance(state, list):
+            messages = state
+        # Case 3: Unknown/Object (fallback)
+        else:
+            # Attempt to access .messages attribute or return as is
+            messages = getattr(state, "messages", state)
+            
+        # Ensure messages is actually a list before finding length
+        if not isinstance(messages, list):
+            messages = [messages]
+
+        # Trim to last 3
+        if len(messages) > 3:
+            return messages[-3:]
+            
+        return messages
         
-    # Keep the last 3 messages (EXTREME trimming for 6k limit)
-    if len(messages) > 3:
-        return messages[-3:]
-    return messages
+    except Exception as e:
+        print(f"⚠️ Context Trimmer Warning: {e}")
+        return state # Fail open (don't crash app)
 
 def build_graph():
     """Constructs the LangGraph ReAct Agent."""
