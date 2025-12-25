@@ -11,6 +11,10 @@ load_dotenv()
 
 # Streamlit App Config
 st.set_page_config(page_title="Riverline Debt Resolution", page_icon="💸")
+
+st.sidebar.title("Riverline AI")
+st.sidebar.caption("v2.1 (Cloud Stable) 🚀")
+st.sidebar.markdown("---")
 st.title("Riverline AI: Debt Resolution Assistant")
 
 # Verify API Keys
