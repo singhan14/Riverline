@@ -115,7 +115,12 @@ def context_trimmer(state):
     Trims the chat history to the last 8 messages to prevent 
     exceeding the 6000 TPM (Tokens Per Minute) limit of Llama 3 8B.
     """
-    messages = state["messages"]
+    # LangGraph can pass state as a dict OR a list depending on context
+    if isinstance(state, list):
+        messages = state
+    else:
+        messages = state.get("messages", [])
+        
     # Keep the last 3 messages (EXTREME trimming for 6k limit)
     if len(messages) > 3:
         return messages[-3:]
