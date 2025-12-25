@@ -4,7 +4,7 @@ langchain
 langchain-community
 langchain-groq
 langsmith
-langgraph
+langgraph==0.2.60
 wikipedia
 # Persistence
 aiosqlite
