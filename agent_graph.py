@@ -131,9 +131,9 @@ def context_trimmer(state):
         if not isinstance(messages, list):
             messages = [messages]
 
-        # Trim to last 3
-        if len(messages) > 3:
-            return messages[-3:]
+        # Trim to last 6 (Balance: Prevents Context Loss vs prevents 413)
+        if len(messages) > 6:
+            return messages[-6:]
             
         return messages
         
