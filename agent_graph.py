@@ -116,9 +116,9 @@ def context_trimmer(state):
     exceeding the 6000 TPM (Tokens Per Minute) limit of Llama 3 8B.
     """
     messages = state["messages"]
-    # Keep the last 8 messages (aggressive trimming for free tier limits)
-    if len(messages) > 8:
-        return messages[-8:]
+    # Keep the last 3 messages (EXTREME trimming for 6k limit)
+    if len(messages) > 3:
+        return messages[-3:]
     return messages
 
 def build_graph():
