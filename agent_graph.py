@@ -115,8 +115,10 @@ def build_graph():
     tools = get_tools()
     
     # Initialize LLM with the correct model
+    # Use .env to switch models if Rate Limited (e.g. "llama3-8b-8192")
+    model_name = os.getenv("GROQ_MODEL", "llama-3.1-70b-versatile")
     llm = ChatGroq(
-        model="llama-3.3-70b-versatile",
+        model=model_name,
         temperature=0.7, 
         api_key=os.getenv("GROQ_API_KEY")
     )
