@@ -110,6 +110,17 @@ def get_tools():
         
     return tools
 
+def context_trimmer(state):
+    """
+    Trims the chat history to the last 8 messages to prevent 
+    exceeding the 6000 TPM (Tokens Per Minute) limit of Llama 3 8B.
+    """
+    messages = state["messages"]
+    # Keep the last 8 messages (aggressive trimming for free tier limits)
+    if len(messages) > 8:
+        return messages[-8:]
+    return messages
+
 def build_graph():
     """Constructs the LangGraph ReAct Agent."""
     tools = get_tools()
@@ -144,7 +155,8 @@ def build_graph():
         conn = sqlite3.connect("memory.sqlite", check_same_thread=False)
         memory = SqliteSaver(conn)
     
-    graph = create_react_agent(llm, tools, checkpointer=memory)    
+    # Pass 'messages_modifier' to trim context before invoking LLM
+    graph = create_react_agent(llm, tools, checkpointer=memory, messages_modifier=context_trimmer)    
     return graph
 
 # Global instance
