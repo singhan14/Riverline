@@ -2,11 +2,12 @@
 
 **A Stateful, Multi-Agent AI System for Empathetic Debt Recovery.**
 
-This project demonstrates an advanced **"Agentic Workflow"** built with **LangGraph** and **Llama 3**. Unlike simple chatbots, this agent uses a **Cyclic ReAct Graph** to reason, call tools, and negotiate debt settlements while strictly adhering to internal policies.
+This project demonstrates an advanced **"Agentic Workflow"** built with **LangGraph** and **Llama 3.1 (8B Instant)**. Unlike simple chatbots, this agent uses a **Cyclic ReAct Graph** to reason, call tools, and negotiate debt settlements while strictly adhering to internal policies.
 
-![Tech Stack](https://img.shields.io/badge/Stack-LangGraph%20%7C%20Llama%203%20%7C%20Streamlit-blue)
+![Tech Stack](https://img.shields.io/badge/Stack-LangGraph%20%7C%20Llama%203.1%20%7C%20Streamlit-blue)
 ![Database](https://img.shields.io/badge/Memory-PostgreSQL%20%2B%20SQLite-green)
 ![Protocol](https://img.shields.io/badge/Data-Model%20Context%20Protocol%20(MCP)-orange)
+![Status](https://img.shields.io/badge/Status-Cloud%20Stable-green)
 
 ---
 
