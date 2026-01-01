@@ -165,7 +165,8 @@ def build_graph():
             conninfo=db_url,
             min_size=0,
             max_size=20,
-            max_lifetime=120,
+            max_lifetime=60, # Recycle very frequently
+            check=ConnectionPool.check_connection, # Force PING before use
             kwargs={"autocommit": True}
         )
         memory = PostgresSaver(pool)
