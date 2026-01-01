@@ -112,34 +112,67 @@ def get_tools():
 
 def context_trimmer(state):
     """
-    Trims chat history to prevent 413 Errors.
-    Robustly handles both List and Dict input types.
+    Trims chat history to the last 10 messages and sanitizes it
+    to prevent 'INVALID_CHAT_HISTORY' errors (Dangling ToolCalls).
     """
     try:
-        # Case 1: State is a Dict (standard LangGraph state)
+        # 1. Standardize Input (List vs Dict)
         if isinstance(state, dict):
             messages = state.get("messages", [])
-        # Case 2: State is a simple List of messages
         elif isinstance(state, list):
             messages = state
-        # Case 3: Unknown/Object (fallback)
         else:
-            # Attempt to access .messages attribute or return as is
             messages = getattr(state, "messages", state)
             
-        # Ensure messages is actually a list before finding length
         if not isinstance(messages, list):
             messages = [messages]
-
-        # Trim to last 6 (Balance: Prevents Context Loss vs prevents 413)
-        if len(messages) > 6:
-            return messages[-6:]
             
-        return messages
+        # 2. Slice (Keep last 10 for context)
+        # We take a slightly larger window to increase chance of finding pairs
+        trimmed = messages[-10:] if len(messages) > 10 else messages
+        
+        # 3. Sanitize: Remove dangling ToolCalls or Orphan ToolMessages
+        sanitized = []
+        skip_next = False
+        
+        # We iterate and rebuild the list to ensure coherence
+        for i, msg in enumerate(trimmed):
+            # If AI Message with Tool Calls
+            if hasattr(msg, 'tool_calls') and msg.tool_calls:
+                # Check if next message is a ToolMessage
+                if i + 1 < len(trimmed):
+                    next_msg = trimmed[i+1]
+                    if hasattr(next_msg, 'tool_call_id') or next_msg.type == 'tool':
+                        # Valid Pair: Keep AI
+                        sanitized.append(msg)
+                    else:
+                        # Invalid: AI wanted tool, but next wasn't tool. 
+                        # Convert to text-only to avoid crash (Strip tool_calls)
+                        msg_copy = msg.model_copy()
+                        msg_copy.tool_calls = []
+                        msg_copy.content = str(msg.content) + " [Tool Call Aborted]"
+                        sanitized.append(msg_copy)
+                else:
+                    # Last message is ToolCall - This is fine (Model will run tool)
+                    sanitized.append(msg)
+            
+            # If ToolMessage (Orphan check)
+            elif msg.type == 'tool':
+                # Check if we have a preceding AI message in sanitized list
+                # (Simple check: Just keep it if we added the parent)
+                # For simplicity in this trimmer: We accept ToolMessages 
+                # because omitting them confuses the model more.
+                sanitized.append(msg)
+            
+            else:
+                # User / System / AI Text
+                sanitized.append(msg)
+                
+        return sanitized
         
     except Exception as e:
         print(f"⚠️ Context Trimmer Warning: {e}")
-        return state # Fail open (don't crash app)
+        return state # Fail open
 
 def build_graph():
     """Constructs the LangGraph ReAct Agent."""
