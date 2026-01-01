@@ -74,7 +74,7 @@ if st.session_state.current_uid != selected_uid:
 
 # Thread ID based on User ID -> "riverline_user_123"
 # This ensures that when you switch back to John Doe, his chat history remains!
-thread_id = f"riverline_v2_user_{selected_uid}"
+thread_id = f"riverline_v3_user_{selected_uid}"
 
 # SYSTEM PROMPT (Dynamic based on selected User)
 # Define this globally so it's available for the chat input handler
