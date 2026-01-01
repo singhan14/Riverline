@@ -112,11 +112,11 @@ def get_tools():
 
 def context_trimmer(state):
     """
-    Trims chat history to the last 10 messages and sanitizes it
-    to prevent 'INVALID_CHAT_HISTORY' errors (Dangling ToolCalls).
+    Trims chat history and strictly sanitizes it to ensure 
+    valid User/AI/Tool sequences for Llama 3 API.
     """
     try:
-        # 1. Standardize Input (List vs Dict)
+        # 1. Standardize Input
         if isinstance(state, dict):
             messages = state.get("messages", [])
         elif isinstance(state, list):
@@ -127,52 +127,76 @@ def context_trimmer(state):
         if not isinstance(messages, list):
             messages = [messages]
             
-        # 2. Slice (Keep last 10 for context)
-        # We take a slightly larger window to increase chance of finding pairs
+        # 2. Slice (Keep last 10)
+        # We need a window large enough to keep context but small enough for tokens
         trimmed = messages[-10:] if len(messages) > 10 else messages
         
-        # 3. Sanitize: Remove dangling ToolCalls or Orphan ToolMessages
         sanitized = []
-        skip_next = False
         
-        # We iterate and rebuild the list to ensure coherence
         for i, msg in enumerate(trimmed):
-            # If AI Message with Tool Calls
+            # Handle AI Messages with Tool Calls
             if hasattr(msg, 'tool_calls') and msg.tool_calls:
-                # Check if next message is a ToolMessage
+                # Must have a next message 
                 if i + 1 < len(trimmed):
                     next_msg = trimmed[i+1]
+                    # And next message must be a Tool Result
                     if hasattr(next_msg, 'tool_call_id') or next_msg.type == 'tool':
-                        # Valid Pair: Keep AI
                         sanitized.append(msg)
                     else:
-                        # Invalid: AI wanted tool, but next wasn't tool. 
-                        # Convert to text-only to avoid crash (Strip tool_calls)
+                        # Dangling: Next is not a tool result (e.g. User spoke, or System error)
+                        # Strip tool call, convert to text
                         msg_copy = msg.model_copy()
                         msg_copy.tool_calls = []
-                        msg_copy.content = str(msg.content) + " [Tool Call Aborted]"
+                        # Ensure content is string
+                        content_str = str(msg.content) if msg.content else ""
+                        msg_copy.content = f"{content_str} [Tool Call Dropped due to Error]"
+                        msg_copy.id = str(uuid.uuid4()) # New ID to avoid conflict
                         sanitized.append(msg_copy)
                 else:
-                    # Last message is ToolCall - This is fine (Model will run tool)
+                    # Last message is Tool Output? No, Last message is AI Tool Call.
+                    # If we are sending this TO the model, it's invalid. 
+                    # The model cannot "see" it acted if there's no result.
+                    # Convert to text.
+                    msg_copy = msg.model_copy()
+                    msg_copy.tool_calls = []
+                    content_str = str(msg.content) if msg.content else ""
+                    msg_copy.content = f"{content_str} [Tool Call Interrupted]"
+                    msg_copy.id = str(uuid.uuid4())
+                    sanitized.append(msg_copy)
+            
+            # Handle Tool Messages (Results)
+            elif msg.type == 'tool':
+                # Orphan Tool Result check
+                # We only keep tool results if we have the parent call in 'sanitized'
+                # But matching by ID is expensive here. 
+                # Simple heuristic: If start of list, drop it.
+                if i == 0:
+                    continue # Drop orphan tool at start
+                else:
                     sanitized.append(msg)
             
-            # If ToolMessage (Orphan check)
-            elif msg.type == 'tool':
-                # Check if we have a preceding AI message in sanitized list
-                # (Simple check: Just keep it if we added the parent)
-                # For simplicity in this trimmer: We accept ToolMessages 
-                # because omitting them confuses the model more.
-                sanitized.append(msg)
-            
             else:
-                # User / System / AI Text
+                # User, System, or Text-only AI
                 sanitized.append(msg)
                 
         return sanitized
         
     except Exception as e:
-        print(f"⚠️ Context Trimmer Warning: {e}")
-        return state # Fail open
+        print(f"⚠️ Context Trimmer Error: {e}")
+        # Emergency Fallback: Return raw list but try to strip tool calls from last msg if any
+        try:
+            if isinstance(state, list) and state:
+                last_msg = state[-1]
+                if hasattr(last_msg, 'tool_calls') and last_msg.tool_calls:
+                     # Create a safe copy of the list excluding last tool call logic
+                     safe_list = state[:-1]
+                     msg_copy = last_msg.model_copy()
+                     msg_copy.tool_calls = []
+                     safe_list.append(msg_copy)
+                     return safe_list
+            return state
+        except:
+            return state
 
 def build_graph():
     """Constructs the LangGraph ReAct Agent."""
